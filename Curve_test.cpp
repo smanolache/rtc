@@ -74,7 +74,7 @@ main(int argc, char *argv[]) {
 
 	// std::ofstream f("plot");
 	// for (double x = 0.0; x < 34.0; x += 0.05) {
-	// 	f << x << '\t' << diff.at(x) << std::endl;
+	// 	f << x << '\t' << diff.y(x) << std::endl;
 	// }
 	// f.close();
 
@@ -164,6 +164,19 @@ main(int argc, char *argv[]) {
 	double r = 0.0;
 	for (double y = 0.0; y <= hi; y += 1e-4) {
 		double diff = cp2->x(y) - cp1->x(y);
+		if (diff > r)
+			r = diff;
+	}
+	std::cout << r << std::endl;
+
+	r = -std::numeric_limits<double>::max();
+	std::cout << max_v_distance(*cp1, *cp2) << std::endl;
+	hi = p1.x > p2.x ? p1.x + 10.0 : p2.x + 10.0;
+	for (double x = 0.0; x <= hi; x += 1e-4) {
+		double y2 = cp2->y(x);
+		double y1 = cp1->y(x);
+		std::cerr << x << '\t' << y1 << '\t' << y2 << std::endl;
+		double diff = y1 - y2;
 		if (diff > r)
 			r = diff;
 	}

@@ -1,6 +1,7 @@
 #include "Curve.hpp"
 #include <utility>
 #include <limits>
+#include <algorithm>
 #include <cmath>
 #include <cassert>
 
@@ -107,16 +108,19 @@ Curve::operator-() const {
 }
 
 double
-Curve::at(double x) const noexcept {
-	unsigned int j = 0, L = size();
-	while (j < L && (*this)[j].x < x)
-		++j;
-	if (j > 0) {
-		if (j == L || (*this)[j].x != x)
-			return (*this)[j-1].y + (x - (*this)[j-1].x) * (*this)[j-1].rate;
-		return (*this)[j].y;
+Curve::y(double x) const noexcept {
+	const_iterator i = std::lower_bound(begin(), end(), x,
+					    [](const Point& p, double x) {
+						    return p.x < x;
+					    });
+	if (end() == i || i->x != x) {
+		if (begin() != i) {
+			--i;
+			return i->y + (x - i->x) * i->rate;
+		}
+		return 0.0;
 	}
-	return 0.0;
+	return i->y;
 }
 
 double
@@ -633,13 +637,66 @@ max_v_distance(const Curve& f_, const Curve& g_) noexcept {
 
 	const Point *fnxt = nullptr, *gnxt = nullptr;
 	double r = 0.0;
-	double dx = g->x - f->x;
-	double dy = g->y - f->y;
 	// f->rate <= g->rate
 
-	if (dx >= 0.0) { // g.x >= f.x
-	}
-	return 0.0;
+	do {
+		double dx = g->x - f->x;
+		double dy = g->y - f->y;
+		if (dx >= 0.0) { // g.x >= f.x
+			if (f->rate <= g->rate) {
+				double q = -dy + dx * f->rate;
+				if (q > r)
+					r = q;
+			}
+			if (gb == g) {
+				if (0.0 != dx || fb != f) {
+					double q = f->y + dx * f->rate;
+					if (q > r)
+						return q;
+				}
+				return r;
+			}
+			gnxt = g--;
+			assert(g->rate > gnxt->rate);
+			assert(fabs(g->rate * (gnxt->x - g->x) + g->y - gnxt->y) < PSEUDO_ZERO);
+		} else { // f.x > g.x
+			if (f->rate <= g->rate) {
+				double q = -dy + dx * g->rate;
+				if (q > r)
+					r = q;
+			}
+			if (fb == f)
+				return r;
+			fnxt = f--;
+			assert(f->rate > fnxt->rate);
+			assert(fabs(f->rate * (fnxt->x - f->x) + f->y - fnxt->y) < PSEUDO_ZERO);
+		}
+	} while (true);
+	return r;
+}
+
+Curve
+max_conv(const Curve& c1, const Curve& c2) {
+	// (f x g)(t) \sup_{0 \le \lambda \le t} { f(t - \lambda) + g(\lambda) }
+	return Curve{};
+}
+
+Curve
+max_deconv(const Curve& c1, const Curve& c2) {
+	// (f x g)(t) \inf_{\lambda \ge 0} { f(t + \lambda) - g(\lambda) }
+	return Curve{};
+}
+
+Curve
+min_conv(const Curve& c1, const Curve& c2) {
+	// (f x g)(t) \inf_{0 \le \lambda \le t} { f(t - \lambda) + g(\lambda) }
+	return Curve{};
+}
+
+Curve
+min_deconv(const Curve& c1, const Curve& c2) {
+	// (f x g)(t) \sup_{\lambda \ge 0} { f(t + \lambda) - g(\lambda) }
+	return Curve{};
 }
 
 static Point
@@ -662,32 +719,25 @@ Curve::merge(const Point& p) {
 
 unsigned int
 Curve::merge_helper(const Point& p) {
-	unsigned int j = 0, L = size();
-	while (j < L && (*this)[j].x < p.x)
-		++j;
-	if (j < L) {
-		// this[j-1].x < p.x <= this[j].x
-		if ((*this)[j].x == p.x) {
-			(*this)[j].y    += p.y;
-			(*this)[j].rate += p.rate;
-		} else {
-			// this[j-1].x < p.x < this[j].x
-			if (j > 0) {
-				Point n(p.x,
-					(*this)[j-1].y + p.y + (*this)[j-1].rate * (p.x - (*this)[j-1].x),
-					(*this)[j-1].rate + p.rate);
-				insert(begin() + j, std::move(n));
-			} else
-				insert(begin(), p);
-		}
+	iterator i = std::lower_bound(begin(), end(), p.x,
+				      [](const Point& p, double x) {
+					      return p.x < x;
+				      });
+	unsigned int r = i - begin() + 1;
+	if (end() == i || i->x != p.x) {
+		if (begin() != i) {
+			--i;
+			Point n(p.x,
+				i->y + p.y + i->rate * (p.x - i->x),
+				i->rate + p.rate);
+			insert(++i, std::move(n));
+		} else
+			insert(i, p);
 	} else {
-		// this[j-1].x < p.x
-		Point n(p.x,
-			(*this)[j-1].y + p.y + (*this)[j-1].rate * (p.x - (*this)[j-1].x),
-			(*this)[j-1].rate + p.rate);
-		emplace_back(std::move(n));
+		i->y    += p.y;
+		i->rate += p.rate;
 	}
-	return j + 1;
+	return r;
 }
 
 Curve&

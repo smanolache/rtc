@@ -18,6 +18,10 @@ extern Curve max_curve(const Curve&, const Curve&);
 extern Curve min_curve(const Curve&, const Curve&);
 extern double max_h_distance(const Curve&, const Curve&) noexcept;
 extern double max_v_distance(const Curve&, const Curve&) noexcept;
+extern Curve max_conv(const Curve&, const Curve&);
+extern Curve max_deconv(const Curve&, const Curve&);
+extern Curve min_conv(const Curve&, const Curve&);
+extern Curve min_deconv(const Curve&, const Curve&);
 
 class Curve: protected std::vector<Point> {
 private:
@@ -77,8 +81,7 @@ public:
 
 	using base_type::size;
 
-	double at(double x) const noexcept;
-
+	double y(double x) const noexcept;
 	double x(double y) const noexcept;
 
 private:
