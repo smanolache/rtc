@@ -678,24 +678,34 @@ max_v_distance(const Curve& f_, const Curve& g_) noexcept {
 Curve
 max_conv(const Curve& c1, const Curve& c2) {
 	// (f x g)(t) \sup_{0 \le \lambda \le t} { f(t - \lambda) + g(\lambda) }
-	return Curve{};
-}
-
-Curve
-max_deconv(const Curve& c1, const Curve& c2) {
-	// (f x g)(t) \inf_{\lambda \ge 0} { f(t + \lambda) - g(\lambda) }
+	// y1 - r1 x1 + y2 - r2 x2 + t max(r1, r2)
 	return Curve{};
 }
 
 Curve
 min_conv(const Curve& c1, const Curve& c2) {
 	// (f x g)(t) \inf_{0 \le \lambda \le t} { f(t - \lambda) + g(\lambda) }
+	// y1 - r1 x1 + y2 - r2 x2 + t min(r1, r2)
+	return Curve{};
+}
+
+Curve
+max_deconv(const Curve& c1, const Curve& c2) {
+	// (f x g)(t) \inf_{\lambda \ge 0} { f(t + \lambda) - g(\lambda) }
+	// y1 + r1 (t + l - x1) - y2 - r2 (l - x2)
+	// y1 - r1 x1 - y2 + r2 x2 + (r1 - r2) l + r1 t
+	// r1 >= r2 => y1 - r1 x1 - y2 + r2 x2 + r1 t
+	// r1  < r2 =>
 	return Curve{};
 }
 
 Curve
 min_deconv(const Curve& c1, const Curve& c2) {
 	// (f x g)(t) \sup_{\lambda \ge 0} { f(t + \lambda) - g(\lambda) }
+	// y1 + r1 (t + l - x1) - y2 - r2 (l - x2)
+	// y1 - r1 x1 - y2 + r2 x2 + (r1 - r2) l + r1 t
+	// r1 >= r2 =>
+	// r1  < r2 => y1 - r1 x1 - y2 + r2 x2 + r1 t
 	return Curve{};
 }
 
